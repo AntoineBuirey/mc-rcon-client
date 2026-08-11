@@ -1,6 +1,8 @@
 const express = require('express');
 const http = require('http');
+const { spawn } = require('child_process');
 const { WebSocketServer } = require('ws');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { Rcon } = require('rcon-client'); // Changement ici
@@ -8,11 +10,130 @@ const { Rcon } = require('rcon-client'); // Changement ici
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+const authSessions = new Map();
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+const PANEL_DIR = '/var/mc-rcon-panel';
+const PUBLIC_DIR = path.join(__dirname, 'public');
 
-app.use(express.static(path.join(__dirname, 'public')));
+const LOGIN_PAGE_PATH = path.join(PUBLIC_DIR, 'login.html');
+const INDEX_PAGE_PATH = path.join(PUBLIC_DIR, 'index.html');
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-const CONFIG_PATH = path.join(__dirname, 'config.json');
+const CONFIG_PATH = path.join(PANEL_DIR, 'config.json');
+const AUTH_COOKIE_NAME = 'mc_rcon_auth';
+
+const auth_pam_BINARY_PATH = PANEL_DIR + '/auth_pam';
+
+function parseCookies(cookieHeader) {
+    return (cookieHeader || '').split(';').reduce((cookies, cookiePart) => {
+        const separatorIndex = cookiePart.indexOf('=');
+        if (separatorIndex === -1) {
+            return cookies;
+        }
+
+        const key = cookiePart.slice(0, separatorIndex).trim();
+        const value = cookiePart.slice(separatorIndex + 1).trim();
+        if (key) {
+            cookies[key] = decodeURIComponent(value);
+        }
+        return cookies;
+    }, {});
+}
+
+function getPamServiceCandidates() {
+    return ['login', 'sshd', 'su']
+        .filter(serviceName => fs.existsSync(`/etc/pam.d/${serviceName}`));
+}
+
+function authenticateLinuxAccount(username, password, serviceName) {
+    return new Promise((resolve, reject) => {
+        const child = spawn(auth_pam_BINARY_PATH, [serviceName, username, password], {
+            stdio: ['ignore', 'pipe', 'pipe']
+        });
+
+        let stderr = '';
+
+        child.stderr.on('data', (chunk) => {
+            stderr += chunk.toString('utf8');
+        });
+
+        child.on('error', reject);
+
+        child.on('close', (code) => {
+            if (code === 0) {
+                resolve(true);
+                return;
+            }
+
+            const error = stderr.trim() || `PAM authentication failed for ${serviceName} (exit code ${code})`;
+            reject(new Error(error));
+        });
+    });
+}
+
+function purgeExpiredSessions() {
+    const now = Date.now();
+    for (const [token, session] of authSessions.entries()) {
+        if (session.expiresAt <= now) {
+            authSessions.delete(token);
+        }
+    }
+}
+
+function createSession(username) {
+    purgeExpiredSessions();
+    const token = crypto.randomBytes(32).toString('hex');
+    authSessions.set(token, {
+        username,
+        expiresAt: Date.now() + SESSION_TTL_MS
+    });
+    return token;
+}
+
+function getAuthenticatedSession(req) {
+    purgeExpiredSessions();
+    const cookies = parseCookies(req.headers.cookie);
+    const token = cookies[AUTH_COOKIE_NAME];
+
+    if (!token) {
+        return null;
+    }
+
+    const session = authSessions.get(token);
+    if (!session) {
+        return null;
+    }
+
+    if (session.expiresAt <= Date.now()) {
+        authSessions.delete(token);
+        return null;
+    }
+
+    return session;
+}
+
+function isAuthenticatedRequest(req) {
+    return Boolean(getAuthenticatedSession(req));
+}
+
+function setAuthCookie(res, token) {
+    res.setHeader('Set-Cookie', `${AUTH_COOKIE_NAME}=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`);
+}
+
+function clearAuthCookie(res) {
+    res.setHeader('Set-Cookie', `${AUTH_COOKIE_NAME}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`);
+}
+
+function renderLoginPage(message = '') {
+    const loginPage = fs.readFileSync(LOGIN_PAGE_PATH, 'utf8');
+    return loginPage.replace('__ERROR_MESSAGE__', message || '');
+}
+
+function sendIndexPage(res) {
+    res.sendFile(INDEX_PAGE_PATH);
+}
 
 function loadConfig() {
     console.log("Loading config.json from:", CONFIG_PATH);
@@ -27,7 +148,11 @@ function loadConfig() {
         };
     } catch (err) {
         console.error("Failed to read config.json:", err);
-        return { port: 3000, administrator: 'administrateur', servers: [] };
+        return {
+            port: 3000,
+            administrator: 'administrateur',
+            servers: []
+        };
     }
 }
 
@@ -77,7 +202,58 @@ function parseServerProperties(filePath) {
     }
 }
 
+app.get('/', (req, res) => {
+    if (isAuthenticatedRequest(req)) {
+        sendIndexPage(res);
+        return;
+    }
+
+    res.status(200).send(renderLoginPage());
+});
+
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body || {};
+
+    if (!username || !password) {
+        res.status(401).send(renderLoginPage('Identifiants Linux invalides.'));
+        return;
+    }
+
+    const serviceCandidates = getPamServiceCandidates();
+
+    if (serviceCandidates.length === 0) {
+        res.status(500).send(renderLoginPage('Aucun service PAM local disponible sur la machine.'));
+        return;
+    }
+
+    let lastError = null;
+    for (const serviceName of serviceCandidates) {
+        try {
+            await authenticateLinuxAccount(username, password, serviceName);
+            const token = createSession(username);
+            setAuthCookie(res, token);
+            res.redirect('/');
+            return;
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    const errorMessage = lastError ? lastError.message : 'Identifiants Linux invalides.';
+    res.status(401).send(renderLoginPage(`Identifiants Linux invalides. ${errorMessage}`));
+});
+
+app.post('/api/logout', (req, res) => {
+    clearAuthCookie(res);
+    res.json({ ok: true });
+});
+
 app.get('/api/servers', (req, res) => {
+    if (!isAuthenticatedRequest(req)) {
+        res.status(401).json({ error: 'Authentification requise.' });
+        return;
+    }
+
     const config = loadConfig();
     const publicServers = config.servers.map((srv, index) => {
         const props = parseServerProperties(srv.propertiesPath);
@@ -92,7 +268,12 @@ app.get('/api/servers', (req, res) => {
     res.json(publicServers);
 });
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
+    if (!isAuthenticatedRequest(req)) {
+        ws.close(1008, 'Authentification requise.');
+        return;
+    }
+
     ws.on('message', async (message) => {
         try {
             const { serverId, command } = JSON.parse(message);
