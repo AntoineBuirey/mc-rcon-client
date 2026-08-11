@@ -1,0 +1,14 @@
+{
+  "port": 80,
+  "administrator": "admin",
+  "servers": [
+    {
+      "name": "Serveur Survie",
+      "propertiesPath": "/var/server/survival/server.properties"
+    },
+    {
+      "name": "Serveur Créatif",
+      "propertiesPath": "/var/server/creative/server.properties"
+    }
+  ]
+}
