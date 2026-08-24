@@ -2,12 +2,14 @@
   "name": "minecraft-rcon-panel",
   "version": "1.0.0",
   "description": "Web RCON panel for multiple Minecraft servers",
-  "main": "server.js",
-  "bin": "server.js",
+  "main": "dist/server.js",
+  "bin": "dist/server.js",
   "scripts": {
+    "build:ts": "tsc -p tsconfig.json",
     "build:auth": "mkdir -p build && gcc auth_pam.c -o build/auth_pam.bin -l:libpam.so.0",
     "build:pkg": "pkg . --target node18-linux-x64 --output build/mc-rcon-panel.bin",
-    "build": "npm run build:auth && npm run build:pkg"
+    "build": "npm run build:ts && npm run build:auth && npm run build:pkg",
+    "start": "node dist/server.js"
   },
   "dependencies": {
     "express": "^4.19.2",
@@ -15,9 +17,16 @@
     "ws": "^8.16.0"
   },
   "devDependencies": {
-    "pkg": "^5.8.1"
+    "@types/express": "^4.17.23",
+    "@types/node": "^24.3.0",
+    "@types/ws": "^8.18.1",
+    "pkg": "^5.8.1",
+    "typescript": "^5.9.2"
   },
   "pkg": {
+    "scripts": [
+      "dist/**/*.js"
+    ],
     "assets": [
       "public/**/*"
     ]
