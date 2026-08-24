@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: false }));
 const CONFIG_PATH = path.join(PANEL_DIR, 'config.json');
 const AUTH_COOKIE_NAME = 'mc_rcon_auth';
 
-const auth_pam_BINARY_PATH = PANEL_DIR + '/auth_pam';
+const auth_pam_BINARY_PATH = PANEL_DIR + '/auth_pam.bin';
 
 function parseCookies(cookieHeader) {
     return (cookieHeader || '').split(';').reduce((cookies, cookiePart) => {

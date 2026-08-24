@@ -5,8 +5,8 @@
   "main": "server.js",
   "bin": "server.js",
   "scripts": {
-    "build:auth": "gcc auth_pam.c -o build/auth_pam -l:libpam.so.0",
-    "build:pkg": "pkg . --target node18-linux-x64 --output build/mc-rcon-panel",
+    "build:auth": "mkdir -p build && gcc auth_pam.c -o build/auth_pam.bin -l:libpam.so.0",
+    "build:pkg": "pkg . --target node18-linux-x64 --output build/mc-rcon-panel.bin",
     "build": "npm run build:auth && npm run build:pkg"
   },
   "dependencies": {
