@@ -61,9 +61,7 @@ echo {} > /etc/mc-rcon-panel/config.json
 echo "Installation completed. Config file is located at /etc/mc-rcon-panel/config.json"
 
 if [ -d /etc/systemd/system ]; then
-    read -p "Do you want to create a systemd service file for mc-rcon-panel? (y/n) " answer
-    if [ "$answer" = "y" ]; then
-        cat <<EOF > /etc/systemd/system/mc-rcon-panel.service
+    cat <<EOF > /etc/systemd/system/mc-rcon-panel.service
 [Unit]
 Description=mc-rcon-panel service
 After=network.target
@@ -76,15 +74,13 @@ Restart=on-failure
 [Install]
 WantedBy=multi-user.target
 EOF
-        systemctl daemon-reload
-        echo "Systemd service file created at /etc/systemd/system/mc-rcon-panel.service"
-        echo "You can start the service with: systemctl start mc-rcon-panel"
-        echo "You can enable the service to start on boot with: systemctl enable mc-rcon-panel"
-    fi
+    systemctl daemon-reload
+    echo "Systemd service file created at /etc/systemd/system/mc-rcon-panel.service"
+    echo "You can start the service with: systemctl start mc-rcon-panel"
+    echo "You can enable the service to start on boot with: systemctl enable mc-rcon-panel"
+
 elif [ -d /etc/init.d ]; then
-    read -p "Do you want to create an OpenRC service file for mc-rcon-panel? (y/n) " answer
-    if [ "$answer" = "y" ]; then
-        cat <<EOF > /etc/init.d/mc-rcon-panel
+    cat <<EOF > /etc/init.d/mc-rcon-panel
 #!/sbin/openrc-run
 name="mc-rcon-panel"
 command="/usr/local/bin/mc-rcon-panel/mc-rcon-panel.bin"
@@ -93,11 +89,10 @@ depend() {
     need net
 }
 EOF
-        chmod +x /etc/init.d/mc-rcon-panel
-        echo "OpenRC service file created at /etc/init.d/mc-rcon-panel"
-        echo "You can start the service with: rc-service mc-rcon-panel start"
-        echo "You can enable the service to start on boot with: rc-update add mc-rcon-panel default"
-    fi
+    chmod +x /etc/init.d/mc-rcon-panel
+    echo "OpenRC service file created at /etc/init.d/mc-rcon-panel"
+    echo "You can start the service with: rc-service mc-rcon-panel start"
+    echo "You can enable the service to start on boot with: rc-update add mc-rcon-panel default"
 else
     echo "No supported service manager found. Skipping service file creation."
 fi
