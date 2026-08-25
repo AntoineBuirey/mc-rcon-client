@@ -1,0 +1,80 @@
+name: Build and publish release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu, alpine]
+
+    container: ${{ matrix.os == 'alpine' && 'node:18-alpine' || null }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        if: matrix.os == 'ubuntu'
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install system dependencies
+        run: |
+          if [ "${{ matrix.os }}" = "alpine" ]; then
+            apk add --no-cache build-base linux-pam-dev tar
+          else
+            sudo apt-get update
+            sudo apt-get install -y build-essential libpam0g-dev
+          fi
+
+      - name: Install npm dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Build application
+        run: |
+          mkdir -p build
+          npm run build
+
+      - name: Create release archive
+        run: |
+          tar -czf "mc-rcon-panel-${{ matrix.os }}.tar.gz" -C build .
+
+      - name: Upload build archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: mc-rcon-panel-${{ matrix.os }}.tar.gz
+
+  publish:
+    name: Publish release assets
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Upload assets to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG_NAME" dist/*.tar.gz --clobber
