@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+echo "Starting installation of mc-rcon-panel..."
 
 case "$(uname -s)" in
 	Linux)
@@ -58,8 +59,6 @@ mkdir -p /etc/mc-rcon-panel
 echo {} > /etc/mc-rcon-panel/config.json
 
 echo "Installation completed. Config file is located at /etc/mc-rcon-panel/config.json"
-
-# ask the user if they want to create a service file for systemd or openrc
 
 if [ -d /etc/systemd/system ]; then
     read -p "Do you want to create a systemd service file for mc-rcon-panel? (y/n) " answer
