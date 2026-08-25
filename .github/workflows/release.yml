@@ -17,7 +17,6 @@ jobs:
 
     container:
       image: ${{ matrix.os == 'alpine' && 'node:24-alpine' || matrix.os == 'debian' && 'node:24-bullseye' || null }}
-      options: --user node
 
     steps:
       - name: Checkout repository
