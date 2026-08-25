@@ -33,9 +33,12 @@ jobs:
         run: |
           if [ "${{ matrix.os }}" = "alpine" ]; then
             apk add --no-cache build-base linux-pam-dev tar
-          else
+          elif [ "${{ matrix.os }}" = "debian" ]; then
             apt-get update
-            apt-get install -y build-essential libpam0g-dev
+            apt-get install -y build-essential libpam0g-dev tar
+          else
+            sudo apt-get update
+            sudo apt-get install -y build-essential libpam0g-dev
           fi
 
       - name: Install npm dependencies
