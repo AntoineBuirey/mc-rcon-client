@@ -13,9 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu, alpine]
+        os: [ubuntu, alpine, debian]
 
-    container: ${{ matrix.os == 'alpine' && 'node:18-alpine' || null }}
+    container:
+      image: ${{ matrix.os == 'alpine' && 'node:24-alpine' || matrix.os == 'debian' && 'node:24-bullseye' || null }}
+      options: --user node
 
     steps:
       - name: Checkout repository
