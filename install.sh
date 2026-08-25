@@ -53,6 +53,7 @@ tar -xzf "$tmpdir/$archive" -C "$install_dir"
 
 # create config file at /etc/mc-rcon-client/config.json
 
+mkdir -p /etc/mc-rcon-client
 echo {} > /etc/mc-rcon-client/config.json
 
 echo "Installation completed. Config file is located at /etc/mc-rcon-client/config.json"
