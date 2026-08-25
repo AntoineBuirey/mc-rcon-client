@@ -1,16 +1,16 @@
 import fs from 'fs';
-import { CONFIG_FILE_PATH } from './constants';
 import type { AppConfig } from './types';
+import { configFilePath } from './path';
 
 let _config: AppConfig | null = null;
 
 export function loadConfig(): AppConfig {
     if (!_config) {
     
-        console.log('Loading config.json from:', CONFIG_FILE_PATH);
+        console.log('Loading config.json from:', configFilePath);
 
         try {
-            const data = fs.readFileSync(CONFIG_FILE_PATH, 'utf8');
+            const data = fs.readFileSync(configFilePath, 'utf8');
             const config = JSON.parse(data) as Partial<AppConfig>;
             _config = {
                 port: 3000,

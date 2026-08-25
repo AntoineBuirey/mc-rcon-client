@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3';
-
+import fs from 'fs';
 import { ServerConfig } from './types';
+import { dbFilePath } from './path';
 
 export interface DbServerConfig extends ServerConfig {
     id: number;
@@ -12,7 +13,8 @@ export class Database {
 
     public static getInstance(): Database {
         if (!Database.instance) {
-            Database.instance = new Database('mydatabase.db');
+            fs.mkdirSync(dbFilePath.substring(0, dbFilePath.lastIndexOf('/')), { recursive: true });
+            Database.instance = new Database(dbFilePath);
         }
         return Database.instance;
     }

@@ -1,4 +1,5 @@
 import express from 'express';
+import process from 'process';
 import http from 'http';
 import { WebSocketServer } from 'ws';
 import { registerHttpRoutes } from './httpRoutes';
