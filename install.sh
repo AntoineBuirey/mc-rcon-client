@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+
 case "$(uname -s)" in
 	Linux)
 		if [ -f /etc/alpine-release ]; then
@@ -51,12 +52,12 @@ install_dir=/usr/local/bin/mc-rcon-panel
 mkdir -p "$install_dir"
 tar -xzf "$tmpdir/$archive" -C "$install_dir"
 
-# create config file at /etc/mc-rcon-client/config.json
+# create config file at /etc/mc-rcon-panel/config.json
 
-mkdir -p /etc/mc-rcon-client
-echo {} > /etc/mc-rcon-client/config.json
+mkdir -p /etc/mc-rcon-panel
+echo {} > /etc/mc-rcon-panel/config.json
 
-echo "Installation completed. Config file is located at /etc/mc-rcon-client/config.json"
+echo "Installation completed. Config file is located at /etc/mc-rcon-panel/config.json"
 
 # ask the user if they want to create a service file for systemd or openrc
 
@@ -98,4 +99,44 @@ EOF
         echo "You can start the service with: rc-service mc-rcon-panel start"
         echo "You can enable the service to start on boot with: rc-update add mc-rcon-panel default"
     fi
+fi
+
+
+# add uninstall script to remove the installed files and service
+if [ -f /usr/local/bin/mc-rcon-panel/uninstall.sh ]; then
+    echo "Uninstall script already exists. Skipping creation."
+else
+    cat <<'EOF' > /usr/local/bin/mc-rcon-panel/uninstall.sh
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# remove service file if it exists
+if [ -f /etc/systemd/system/mc-rcon-panel.service ]; then
+    systemctl stop mc-rcon-panel || true
+    systemctl disable mc-rcon-panel || true
+    rm -f /etc/systemd/system/mc-rcon-panel.service
+    systemctl daemon-reload
+    echo "Systemd service file removed."
+elif [ -f /etc/init.d/mc-rcon-panel ]; then
+    rc-service mc-rcon-panel stop || true
+    rc-update del mc-rcon-panel || true
+    rm -f /etc/init.d/mc-rcon-panel
+    echo "OpenRC service file removed."
+fi
+
+# remove installed files
+rm -rf /usr/local/bin/mc-rcon-panel
+
+# remove config file
+rm -rf /etc/mc-rcon-panel
+
+# remove database file
+rm -rf /var/lib/mc-rcon-panel
+
+echo "mc-rcon-panel uninstalled successfully."
+EOF
+    chmod +x /usr/local/bin/mc-rcon-panel/uninstall.sh
+    echo "Uninstall script created at /usr/local/bin/mc-rcon-panel/uninstall.sh"
+    echo "You can uninstall mc-rcon-panel by running: /usr/local/bin/mc-rcon-panel/uninstall.sh"
 fi
