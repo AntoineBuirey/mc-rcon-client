@@ -99,6 +99,8 @@ EOF
         echo "You can start the service with: rc-service mc-rcon-panel start"
         echo "You can enable the service to start on boot with: rc-update add mc-rcon-panel default"
     fi
+else
+    echo "No supported service manager found. Skipping service file creation."
 fi
 
 
