@@ -9,7 +9,7 @@ import {
   isAuthenticatedRequest,
   setAuthCookie
 } from './auth';
-import { loadConfig, parseServerProperties } from './config';
+import { loadConfig } from './config';
 
 function renderLoginPage(message = ''): string {
   const loginPage = fs.readFileSync(LOGIN_PAGE_PATH, 'utf8');
@@ -75,13 +75,11 @@ export function registerHttpRoutes(app: Express): void {
 
     const config = loadConfig();
     const publicServers = config.servers.map((srv, index) => {
-      const props = parseServerProperties(srv.propertiesPath);
       return {
         id: index,
         name: srv.name,
-        host: props.host,
-        port: props.port,
-        propertiesPath: srv.propertiesPath
+        host: srv.host,
+        port: srv.port
       };
     });
 

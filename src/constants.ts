@@ -1,10 +1,14 @@
 import path from 'path';
 
+export const APP_NAME = 'mc-rcon-panel';
+
+export const DB_FILE_PATH = `/var/lib/${APP_NAME}/data.db`;
+export const CONFIG_FILE_PATH = `/etc/${APP_NAME}/config.json`;
+export const BIN_PATH = `/usr/local/bin/${APP_NAME}`;
+
 export const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
-export const PANEL_DIR = '/var/mc-rcon-panel';
-export const CONFIG_PATH = path.join(PANEL_DIR, 'config.json');
 export const AUTH_COOKIE_NAME = 'mc_rcon_auth';
-export const AUTH_PAM_BINARY_PATH = path.join(PANEL_DIR, 'auth_pam.bin');
+export const AUTH_PAM_BINARY_PATH = path.join(BIN_PATH, 'auth_pam.bin');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 export const PUBLIC_DIR = path.join(ROOT_DIR, 'public');

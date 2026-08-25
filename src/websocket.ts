@@ -2,7 +2,7 @@ import type { IncomingMessage } from 'http';
 import { WebSocketServer } from 'ws';
 import type { WebSocket } from 'ws';
 import { isAuthenticatedRequest } from './auth';
-import { loadConfig, parseServerProperties } from './config';
+import { loadConfig } from './config';
 import { formatCommand, sendRconCommand } from './rcon';
 
 interface CommandMessage {
@@ -42,17 +42,11 @@ export function registerWebsocketHandlers(wss: WebSocketServer): void {
           return;
         }
 
-        const props = parseServerProperties(srvConfig.propertiesPath);
-        if (!props.password) {
-          ws.send(JSON.stringify({ error: 'Mot de passe RCON non defini dans server.properties.' }));
-          return;
-        }
-
         const rconCommand = formatCommand(command, config.administrator || 'administrateur');
         const response = await sendRconCommand({
-          host: props.host,
-          port: props.port,
-          password: props.password,
+          host: srvConfig.host,
+          port: srvConfig.port,
+          password: srvConfig.password,
           command: rconCommand
         });
 

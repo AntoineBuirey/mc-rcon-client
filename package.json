@@ -8,12 +8,15 @@
     "build:ts": "tsc -p tsconfig.json",
     "build:auth": "mkdir -p build && gcc auth_pam.c -o build/auth_pam.bin -l:libpam.so.0",
     "build:pkg": "pkg . --target node18-linux-x64 --output build/mc-rcon-panel.bin",
-    "build": "npm run build:ts && npm run build:auth && npm run build:pkg",
-    "start": "node dist/server.js"
+    "build:config": "cp config.json build/config.json",
+    "build": "npm run build:ts && npm run build:auth && npm run build:pkg && npm run build:config",
+    "start": "cd build && ./mc-rcon-panel.bin && cd .."
   },
   "dependencies": {
     "express": "^4.19.2",
     "rcon-client": "^4.2.5",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1",
     "ws": "^8.16.0"
   },
   "devDependencies": {

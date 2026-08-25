@@ -1,14 +1,18 @@
 {
-  "port": 80,
+  "port": 8000,
   "administrator": "admin",
   "servers": [
     {
       "name": "Serveur Survie",
-      "propertiesPath": "/var/server/survival/server.properties"
+      "host": "127.0.0.1",
+      "port": 25565,
+      "password": "password"
     },
     {
       "name": "Serveur Créatif",
-      "propertiesPath": "/var/server/creative/server.properties"
+      "host": "127.0.0.1",
+      "port": 25566,
+      "password": "password"
     }
   ]
 }
