@@ -29,14 +29,14 @@
     <div class="modal-overlay" id="server-modal">
         <div class="modal">
             <button class="modal-close" id="modal-close">&times;</button>
-            <h2>Add a new server</h2>
+            <h2 id="server-modal-title">Add a new server</h2>
 
             <form id="server-form">
                 <input name="name" type="text" placeholder="Nom du serveur" required>
                 <input name="host" type="text" placeholder="Adresse IP ou hostname" required>
                 <input name="port" type="number" placeholder="Port RCON" min="1" max="65535" required>
                 <input name="password" type="password" placeholder="Mot de passe RCON" required>
-                <button type="submit" class="send-btn">Add</button>
+                <button type="submit" class="send-btn" id="server-form-submit">Add</button>
             </form>
             <p id="server-form-error"></p>
         </div>

@@ -1,9 +1,16 @@
 let servers = [];
 let activeServerId = null;
+let editingServerId = null;
 let commandHistory = [];
 let commandHistoryIndex = -1;
 let currentDraft = '';
 const ws = new WebSocket(`ws://${window.location.host}`);
+
+
+const modal = document.getElementById('server-modal');
+const serverForm = document.getElementById('server-form');
+const formError = document.getElementById('server-form-error');
+
 
 ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -28,7 +35,7 @@ async function fetchServers() {
     const listDiv = document.getElementById('server-list');
     listDiv.innerHTML = '<h3>Servers</h3>';
 
-    servers.forEach(srv => {
+    servers.forEach((srv) => {
         const row = document.createElement('div');
         row.className = 'server-row';
 
@@ -36,6 +43,15 @@ async function fetchServers() {
         btn.className = 'server-btn';
         btn.innerText = srv.name;
         btn.onclick = () => selectServer(srv.id);
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-server-btn';
+        editBtn.innerText = '✎';
+        editBtn.title = `Edit ${srv.name}`;
+        editBtn.onclick = (event) => {
+            event.stopPropagation();
+            openEditModal(srv);
+        };
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-server-btn';
@@ -46,11 +62,72 @@ async function fetchServers() {
             deleteServer(srv.id, srv.name);
         };
 
-        row.appendChild(btn);
-        row.appendChild(deleteBtn);
+        row.append(btn, editBtn, deleteBtn);
         listDiv.appendChild(row);
     });
 }
+
+function openAddModal() {
+    editingServerId = null;
+    formError.innerText = '';
+    serverForm.reset();
+    document.getElementById('server-modal-title').innerText = 'Add a new server';
+    document.getElementById('server-form-submit').innerText = 'Add';
+    modal.classList.add('visible');
+}
+
+function openEditModal(server) {
+    editingServerId = server.id;
+    formError.innerText = '';
+
+    serverForm.elements.name.value = server.name;
+    serverForm.elements.host.value = server.host;
+    serverForm.elements.port.value = server.port;
+    serverForm.elements.password.value = server.password;
+
+    document.getElementById('server-modal-title').innerText = 'Edit server';
+    document.getElementById('server-form-submit').innerText = 'Save';
+    modal.classList.add('visible');
+}
+
+document.getElementById('add-server-btn').onclick = openAddModal;
+
+serverForm.onsubmit = async (event) => {
+    event.preventDefault();
+    formError.innerText = '';
+
+    const formData = new FormData(serverForm);
+    const server = Object.fromEntries(formData.entries());
+    server.port = Number(server.port);
+
+    const isEditing = editingServerId !== null;
+    const url = isEditing
+        ? `/api/server/${editingServerId}`
+        : '/api/server';
+
+    const res = await fetch(url, {
+        method: isEditing ? 'PUT' : 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(server)
+    });
+
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        formError.innerText = data.error || 'Error while saving server.';
+        return;
+    }
+
+    modal.classList.remove('visible');
+    editingServerId = null;
+    await fetchServers();
+
+    if (isEditing && activeServerId === server.id) {
+        selectServer(activeServerId);
+    }
+};
+
 
 function selectServer(id) {
     activeServerId = id;
@@ -98,10 +175,6 @@ async function deleteServer(id, name) {
     await fetchServers();
 }
 
-const modal = document.getElementById('server-modal');
-const serverForm = document.getElementById('server-form');
-const formError = document.getElementById('server-form-error');
-
 document.getElementById('add-server-btn').onclick = () => {
     formError.innerText = '';
     serverForm.reset();
@@ -116,32 +189,6 @@ modal.onclick = (event) => {
     if (event.target === modal) {
         modal.classList.remove('visible');
     }
-};
-
-serverForm.onsubmit = async (event) => {
-    event.preventDefault();
-    formError.innerText = '';
-
-    const formData = new FormData(serverForm);
-    const server = Object.fromEntries(formData.entries());
-    server.port = Number(server.port);
-
-    const res = await fetch('/api/server', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(server)
-    });
-
-    if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        formError.innerText = data.error || 'Error while adding server.';
-        return;
-    }
-
-    modal.classList.remove('visible');
-    await fetchServers();
 };
 
 function sendCommand() {

@@ -187,6 +187,37 @@ export function registerHttpRoutes(app: Express): void {
             });
     });
 
+    app.put('/api/server/:id', (req, res) => {
+        if (!isAuthenticatedRequest(req)) {
+            res.status(401).json({ error: 'Authentification requise.' });
+            return;
+        }
+
+        const serverId = parseInt(req.params.id, 10);
+        if (isNaN(serverId)) {
+            res.status(400).json({ error: 'ID du serveur invalide.' });
+            return;
+        }
+
+        const serverConfig = req.body as Partial<ServerConfig>;
+
+        if (!serverConfig.name || !serverConfig.host || !serverConfig.port || !serverConfig.password) {
+            res.status(400).json({ error: 'Configuration du serveur invalide.' });
+            return;
+        }
+
+        const db = Database.getInstance();
+
+        db.updateServer(serverId, serverConfig as ServerConfig)
+            .then(() => {
+                res.json({ ok: true });
+            })
+            .catch((err) => {
+                console.error('Erreur lors de la mise à jour du serveur dans la base de données :', err);
+                res.status(500).json({ error: 'Erreur interne du serveur.' });
+            });
+    });
+
     app.get('/*', (req, res) => {
         const filePath = req.path === '/' ? INDEX_PAGE_PATH : `${PUBLIC_DIR}${req.path}`;
         sendStaticFile(res, filePath);
