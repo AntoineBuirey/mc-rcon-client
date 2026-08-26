@@ -45,7 +45,7 @@ case "$(uname -s)" in
 esac
 
 archive="mc-rcon-panel-${os}.tar.gz"
-url="https://github.com/AntoineBuirey/mc-rcon-client/releases/latest/download/${archive}"
+url="https://github.com/AntoineBuirey/mc-rcon-client/releases/${version}/download/${archive}"
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT
 
