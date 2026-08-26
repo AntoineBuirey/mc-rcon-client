@@ -22,10 +22,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up python3
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
+      - name: Install system dependencies
+        run: |
+          if [ "${{ matrix.os }}" = "alpine" ]; then
+            apk add --no-cache build-base linux-pam-dev python3 tar
+          elif [ "${{ matrix.os }}" = "debian" ]; then
+            apt-get update
+            apt-get install -y build-essential libpam0g-dev python3 tar
+          else
+            sudo apt-get update
+            sudo apt-get install -y build-essential libpam0g-dev python3
+          fi
+
+          npm config set python "$(command -v python3)"
+
+      - name: Install npm dependencies
+        run: npm install
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
