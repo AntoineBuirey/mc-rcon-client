@@ -42,7 +42,7 @@ jobs:
       - name: Install npm dependencies
         run: |
           export PYTHON="$(command -v python3)"
-          npm ci
+          npm install
 
       - name: Build application
         run: |
