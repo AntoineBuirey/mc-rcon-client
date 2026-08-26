@@ -4,6 +4,18 @@ set -euo pipefail
 
 echo "Starting installation of mc-rcon-panel..."
 
+version=latest
+# if --version is passed as an argument, use that version instead of latest
+if [ $# -gt 0 ]; then
+	if [ "$1" = "--version" ]; then
+		if [ $# -lt 2 ]; then
+			echo "Usage: $0 --version <version>"
+			exit 1
+		fi
+		version="$2"
+	fi
+fi
+
 case "$(uname -s)" in
 	Linux)
 		if [ -f /etc/alpine-release ]; then
