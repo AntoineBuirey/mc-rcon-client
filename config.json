@@ -1,18 +1,4 @@
 {
   "port": 8000,
   "administrator": "admin",
-  "servers": [
-    {
-      "name": "Serveur Survie",
-      "host": "127.0.0.1",
-      "port": 25565,
-      "password": "password"
-    },
-    {
-      "name": "Serveur Créatif",
-      "host": "127.0.0.1",
-      "port": 25566,
-      "password": "password"
-    }
-  ]
 }
