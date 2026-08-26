@@ -16,7 +16,7 @@ jobs:
         os: [ubuntu, alpine, debian]
 
     container:
-      image: ${{ matrix.os == 'alpine' && 'node:24-alpine' || matrix.os == 'debian' && 'node:24-bullseye' || null }}
+      image: ${{ matrix.os == 'alpine' && 'node:18-alpine' || matrix.os == 'debian' && 'node:18-bullseye' || null }}
 
     steps:
       - name: Checkout repository
@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-node@v4
         if: matrix.os == 'ubuntu'
         with:
-          node-version: 24
+          node-version: 18
           cache: npm
 
       - name: Install system dependencies
@@ -44,12 +44,12 @@ jobs:
       - name: Install npm dependencies
         run: |
           export PYTHON="$(command -v python3)"
-          npm install
+          npm ci
 
       - name: Build application
         run: |
-          mkdir -p build
           npm run build
+          npm prune --omit=dev
 
       - name: Create release archive
         run: |

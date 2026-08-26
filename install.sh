@@ -47,6 +47,11 @@ else
 fi
 
 
+# install nodejs if not installed
+if ! command -v node >/dev/null 2>&1; then
+    apt-get update
+    apt-get install -y nodejs
+fi
 
 
 install_dir=/usr/local/bin/mc-rcon-panel
@@ -85,6 +90,7 @@ elif [ -d /etc/init.d ]; then
 name="mc-rcon-panel"
 command="/usr/local/bin/mc-rcon-panel/mc-rcon-panel.bin"
 command_background=true
+pidfile="/var/run/mc-rcon-panel.pid"
 depend() {
     need net
 }

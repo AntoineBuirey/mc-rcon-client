@@ -3,12 +3,12 @@
     "version": "1.0.0",
     "description": "Web RCON panel for multiple Minecraft servers",
     "main": "dist/server.js",
-    "bin": "dist/server.js",
     "scripts": {
         "build:ts": "tsc -p tsconfig.json",
         "build:auth": "mkdir -p build && gcc auth_pam.c -o build/auth_pam.bin -l:libpam.so.0",
-        "build:pkg": "pkg . --target node18-linux-x64 --output build/mc-rcon-panel.bin",
-        "build": "npm run build:ts && npm run build:auth && npm run build:pkg",
+        "build:launcher": "mkdir -p build && cp scripts/mc-rcon-panel.bin build/mc-rcon-panel.bin && chmod +x build/mc-rcon-panel.bin",
+        "build:runtime": "rm -rf build/dist build/public build/node_modules && cp -r dist build/dist && cp -r public build/public && cp -r node_modules build/node_modules",
+        "build": "npm run build:ts && npm run build:auth && npm run build:launcher && npm run build:runtime",
         "start": "./build/mc-rcon-panel.bin --db=./run/data.db --config=./config.json --bin=./build/auth_pam.bin"
     },
     "dependencies": {
@@ -21,18 +21,9 @@
         "@types/express": "^4.17.23",
         "@types/node": "^24.3.0",
         "@types/ws": "^8.18.1",
-        "pkg": "^5.8.1",
         "typescript": "^5.9.2"
     },
     "overrides": {
         "node-gyp": "^11.2.0"
-    },
-    "pkg": {
-        "scripts": [
-            "dist/**/*.js"
-        ],
-        "assets": [
-            "public/**/*"
-        ]
     }
 }
