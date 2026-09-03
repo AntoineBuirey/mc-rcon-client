@@ -12,7 +12,7 @@
         "start": "./build/mc-rcon-panel.bin --db=./run/data.db --config=./config.json --bin=./build/auth_pam.bin"
     },
     "dependencies": {
-        "express": "^4.19.2",
+        "express": "^5.2.1",
         "rcon-client": "^4.2.5",
         "sqlite3": "5.1.7",
         "ws": "^8.16.0"
